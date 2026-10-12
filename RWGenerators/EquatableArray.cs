@@ -1,4 +1,6 @@
 // Based on https://github.com/andrewlock/StronglyTypedId/blob/master/src/StronglyTypedIds/EquatableArray.cs
+// Which is based on https://github.com/CommunityToolkit/dotnet/blob/7b53ae23dfc6a7fb12d0fc058b89b6e948f48448/src/CommunityToolkit.Mvvm.SourceGenerators/Helpers/EquatableArray%7BT%7D.cs
+// Backing type is changed by me from T[] to ImmutableArray<T>
 
 using System.Collections;
 using System.Collections.Immutable;
@@ -7,25 +9,25 @@ using System.Runtime.CompilerServices;
 namespace RWGenerators;
 
 /// <summary>
-/// An immutable, equatable array. This is equivalent to <see cref="Array{T}"/> but with value equality support.
+/// An immutable, equatable array. This is equivalent to <see cref="ImmutableArray{T}"/> but with value equality support.
 /// </summary>
 /// <typeparam name="T">The type of values in the array.</typeparam>
-[CollectionBuilder(typeof(EquatableArrayBuilder), nameof(EquatableArrayBuilder.Create))]
+[CollectionBuilder(typeof(EquatableArray), nameof(EquatableArray.Create))]
 internal readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnumerable<T>
     where T : IEquatable<T>
 {
-    public static readonly EquatableArray<T> Empty = new(Array.Empty<T>());
+    public static readonly EquatableArray<T> Empty = new(ImmutableArray<T>.Empty);
 
     /// <summary>
-    /// The underlying <typeparamref name="T"/> array.
+    /// The underlying <see cref="ImmutableArray{T}"/>.
     /// </summary>
-    private readonly T[]? _array;
+    private readonly ImmutableArray<T> _array;
 
     /// <summary>
     /// Creates a new <see cref="EquatableArray{T}"/> instance.
     /// </summary>
-    /// <param name="array">The input <see cref="ImmutableArray"/> to wrap.</param>
-    public EquatableArray(T[] array)
+    /// <param name="array">The input <see cref="ImmutableArray{T}"/> to wrap.</param>
+    public EquatableArray(ImmutableArray<T> array)
     {
         _array = array;
     }
@@ -45,18 +47,11 @@ internal readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnu
     /// <sinheritdoc/>
     public override int GetHashCode()
     {
-        if (_array is not T[] array)
-        {
-            return 0;
-        }
-
         HashCode hashCode = default;
-
-        foreach (T item in array)
+        foreach (T item in _array)
         {
             hashCode.Add(item);
         }
-
         return hashCode.ToHashCode();
     }
 
@@ -70,23 +65,41 @@ internal readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnu
     }
 
     /// <summary>
-    /// Gets the underlying array if there is one
+    /// Gets the underlying immutable array
     /// </summary>
-    public T[]? GetArray() => _array;
+    public ImmutableArray<T> ImmutableArray => _array;
 
-    /// <sinheritdoc/>
+    public int Length => _array.Length;
+
+    public T this[int index] => _array[index];
+
+    /// <summary>
+    /// Returns an enumerator for the contents of the array.
+    /// </summary>
+    /// <returns>An enumerator.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ImmutableArray<T>.Enumerator GetEnumerator()
+    {
+        return _array.GetEnumerator();
+    }
+
+    /// <summary>
+    /// Returns an enumerator for the contents of the array.
+    /// </summary>
+    /// <returns>An enumerator.</returns>
     IEnumerator<T> IEnumerable<T>.GetEnumerator()
     {
-        return ((IEnumerable<T>)(_array ?? Array.Empty<T>())).GetEnumerator();
+        return ((IEnumerable<T>)_array).GetEnumerator();
     }
 
-    /// <sinheritdoc/>
+    /// <summary>
+    /// Returns an enumerator for the contents of the array.
+    /// </summary>
+    /// <returns>An enumerator.</returns>
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return ((IEnumerable<T>)(_array ?? Array.Empty<T>())).GetEnumerator();
+        return ((IEnumerable)_array).GetEnumerator();
     }
-
-    public int Count => _array?.Length ?? 0;
 
     /// <summary>
     /// Checks whether two <see cref="EquatableArray{T}"/> values are the same.
@@ -111,10 +124,15 @@ internal readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnu
     }
 }
 
-internal static class EquatableArrayBuilder
+internal static class EquatableArray
 {
     public static EquatableArray<T> Create<T>(ReadOnlySpan<T> values) where T: IEquatable<T>
     {
-        return new EquatableArray<T>(values.ToArray());
+        if (values.IsEmpty)
+        {
+            return EquatableArray<T>.Empty;
+        }
+
+        return new EquatableArray<T>(values.ToImmutableArray());
     }
 }

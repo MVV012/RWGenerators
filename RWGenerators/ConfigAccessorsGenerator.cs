@@ -67,27 +67,27 @@ internal class {AttributeName}(string className) : Attribute
         List<(string Name, string Type)> configurables = [];
         foreach (IPropertySymbol symbol in classSymbol.GetMembers()
             .OfType<IPropertySymbol>()
-            .Where(s => s.IsStatic && s.IsReadOnly && s.Type.Name == "Configurable"))
+            .Where(s => s.IsStatic && s.Type.Name == "Configurable"))
         {
             if (symbol.Type is INamedTypeSymbol genericType)
             {
-                configurables.Add((symbol.Name, genericType.TypeArguments[0].Name));
+                configurables.Add((symbol.Name, genericType.TypeArguments[0].FullyQualifiedName));
             }
         }
         foreach (IFieldSymbol symbol in classSymbol.GetMembers()
             .OfType<IFieldSymbol>()
-            .Where(s => s.IsStatic && !s.Name.EndsWith("k__BackingField") && s.Type.Name == "Configurable"))
+            .Where(s => s.IsStatic && s.AssociatedSymbol == null && s.Type.Name == "Configurable"))
         {
             if (symbol.Type is INamedTypeSymbol genericType)
             {
-                configurables.Add((symbol.Name, genericType.TypeArguments[0].Name));
+                configurables.Add((symbol.Name, genericType.TypeArguments[0].FullyQualifiedName));
             }
         }
 
         return new GeneratedClassInfo(
             generatedName,
             generatedNamespace,
-            classSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            classSymbol.FullyQualifiedName,
             [..configurables]
         );
     }
