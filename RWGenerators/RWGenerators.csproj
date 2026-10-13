@@ -4,16 +4,30 @@
     <AssemblyTitle>Rain World Source Generators</AssemblyTitle>
     <Version>0.1.0</Version>
 
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>preview</LangVersion>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <DebugType>embedded</DebugType>
     <PathMap>$(MSBuildProjectDirectory)=/$(SolutionName)</PathMap>
     <OutputPath>../build</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/MVV012/RWGenerators</RepositoryUrl>
+    <PackageLicenseExpression>CC0-1.0</PackageLicenseExpression>
+    <PackageId>RWGenerators</PackageId>
+    <Description>Some source generators for Rain World mods</Description>
+    <Authors>MVV012</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>rain-world;modding;source-generator;$(PackageTags)</PackageTags>
+
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,8 +40,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true"
-          PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="../README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>
