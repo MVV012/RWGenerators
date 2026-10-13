@@ -492,3 +492,6 @@ lib
 
 # Build result
 build
+
+# Generated source code
+TestMod/src/Generated

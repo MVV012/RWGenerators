@@ -1,0 +1,10 @@
+{
+	"id": "mvv012.rwgenerators_testmod",
+	"name": "RWGenerators Test Mod",
+	"version": "0.1.0",
+	"authors": "MVV012",
+  "requirements": ["fluffball.logmanager", "rwimgui"],
+	"priorities": [],
+	"tags": [],
+	"checksum_override_version": false
+}

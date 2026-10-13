@@ -1,0 +1,84 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>mvv012.rwgenerators_testmod</AssemblyName>
+    <AssemblyTitle>RWGenerators Test Mod</AssemblyTitle>
+    <Version>0.1.0</Version>
+    <UpdateModinfoAtPath>../mod/modinfo.json</UpdateModinfoAtPath>
+
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <DebugType>portable</DebugType>
+    <PathMap>$(MSBuildProjectDirectory)=/$(ProjectName)</PathMap>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>../mod/newest/plugins</OutputPath>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
+    <None Include="$(CompilerGeneratedFilesOutputPath)/**/*.cs" Visible="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="../lib/**/*.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hamunii.BepInEx.AutoPlugin" Version="2.1.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="PolySharp" Version="1.16.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <ProjectReference Include="..\..\RWGenerators\RWGenerators.csproj" PrivateAssets="all" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <UsingTask TaskName="UpdateModinfo" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup />
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+if (!string.IsNullOrEmpty("$(UpdateModinfoAtPath)"))
+{
+  if (!File.Exists("$(UpdateModinfoAtPath)"))
+  {
+    Log.LogError("File at $(UpdateModinfoAtPath) doesn't exist");
+  }
+  else
+  {
+    string modinfo = File.ReadAllText("$(UpdateModinfoAtPath)");
+    string res = modinfo;
+    res = Regex.Replace(res, @"(?<=""id"": *"")(.*)(?="")", "$(AssemblyName)");
+    res = Regex.Replace(res, @"(?<=""name"": *"")(.*)(?="")", "$(AssemblyTitle)");
+    res = Regex.Replace(res, @"(?<=""version"": *"")(.*)(?="")", "$(Version)");
+
+    if (res != modinfo) {
+        File.WriteAllText("$(UpdateModinfoAtPath)", res);
+        Log.LogWarning("Updated information in $(UpdateModinfoAtPath)");
+        Log.LogWarning("Before: " + modinfo);
+        Log.LogWarning("After: " + res);
+    }
+  }
+}
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="UpdateModFiles" AfterTargets="PostBuildEvent">
+    <UpdateModinfo />
+  </Target>
+
+</Project>
