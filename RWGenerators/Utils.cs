@@ -1,5 +1,8 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
+using System.Reflection;
+using System.Text;
 
 namespace RWGenerators;
 
@@ -20,6 +23,17 @@ internal static class Utils
         else
         {
             return (arg[(dotIndex + 1)..], arg[..dotIndex]);
+        }
+    }
+
+    extension (IncrementalGeneratorPostInitializationContext ctx)
+    {
+        public void AddEmbeddedSource(string name)
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string resourceName = $"{assembly.GetName().Name}.Embedded.{name}";
+            using Stream stream = assembly.GetManifestResourceStream(resourceName);
+            ctx.AddSource(name, SourceText.From(stream, Encoding.UTF8, canBeEmbedded: true));
         }
     }
 

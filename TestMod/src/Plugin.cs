@@ -2,6 +2,7 @@ using BepInEx;
 using LogUtils;
 using MonoMod.RuntimeDetour;
 using MonoMod.RuntimeDetour.HookGen;
+using RWGenerators;
 using System.Security.Permissions;
 
 // Allows access to private members
@@ -27,6 +28,8 @@ sealed public partial class Plugin : BaseUnityPlugin
 
         ImGUIWindow.OnEnable();
 
+        AttachedFieldManager.ApplyHooks();
+
         On.RainWorld.OnModsInit += RainWorld_OnModsInit;
     }
 
@@ -51,5 +54,7 @@ sealed public partial class Plugin : BaseUnityPlugin
 
         if (_isInit) return;
         _isInit = true;
+
+        AttachedFields.Test();
     }
 }

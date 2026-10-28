@@ -5,7 +5,7 @@ internal record class AttachedFieldInfo(
     string FieldType,
     bool IsValueType,
     string PropertyName,
-    StaticClassInfo ContainingClass
+    ClassInfo ContainingClass
 )
 {
     public string? DefaultValueString { get; init; } = null;
@@ -14,7 +14,7 @@ internal record class AttachedFieldInfo(
     public bool ClearOnWorldLoaded { get; init; } = false;
 }
 
-internal record class StaticClassInfo(
+internal record class ClassInfo(
     string Name,
     string Namespace,
     string Modifiers
