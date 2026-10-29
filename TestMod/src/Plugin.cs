@@ -4,6 +4,7 @@ using MonoMod.RuntimeDetour;
 using MonoMod.RuntimeDetour.HookGen;
 using RWGenerators;
 using System.Security.Permissions;
+using TestMod.Tests;
 
 // Allows access to private members
 #pragma warning disable CS0618
@@ -27,6 +28,7 @@ sealed public partial class Plugin : BaseUnityPlugin
         Log.LogDebug("OnEnable");
 
         ImGUIWindow.OnEnable();
+        TestRunner.OnEnable();
 
         AttachedFieldManager.ApplyHooks();
 

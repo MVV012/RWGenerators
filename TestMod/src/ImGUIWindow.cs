@@ -10,6 +10,7 @@ using RWCustom;
 using RWIMGUI.API;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using TestMod.Tests;
 
 namespace TestMod;
 
@@ -115,6 +116,14 @@ internal class ImGUIWindow
             }
             ImGui.Indent();
             ImGui.TreePop();
+        }
+
+        if (ImGui.Button("Run WeakTable tests"))
+        {
+            RunOnMainThread(() => {
+                TestRunner runner = new() { ReportVerbosity = LogUtils.Enums.FormatEnums.FormatVerbosity.Compact };
+                runner.RunTest(new WeakTableTests());
+            });
         }
 
         if (ImGui.Button("CWT leak test setup"))

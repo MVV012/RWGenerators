@@ -36,7 +36,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
             _buckets[i] = -1;
         }
         _entries = new Entry[InitialCapacity];
-        _lastGCCount = GC.CollectionCount(2);
+        _lastGCCount = GC.CollectionCount(0);
     }
 
     public TValue GetValue(TKey key, Func<TValue> valueFactory)
@@ -60,7 +60,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
         CullDeadIfNeeded();
 
         int hash = RuntimeHelpers.GetHashCode(key);
-        ref int entryIndex = ref _buckets[(hash >> 8) & (_buckets.Length - 1)];
+        ref int entryIndex = ref GetBucket(hash);
 
         while (entryIndex != -1)
         {
@@ -90,7 +90,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
         CullDeadIfNeeded();
 
         int hash = RuntimeHelpers.GetHashCode(key);
-        ref int entryIndex = ref _buckets[(hash >> 8) & (_buckets.Length - 1)];
+        ref int entryIndex = ref GetBucket(hash);
 
         while (entryIndex != -1)
         {
@@ -127,7 +127,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
         }
         _allocatedEntries = 0;
         _freeList = -1;
-        _lastGCCount = GC.CollectionCount(2);
+        _lastGCCount = GC.CollectionCount(0);
         _checkGCCount = 0;
     }
 
@@ -160,7 +160,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
             CullDeadIfNeeded();
 
         int hash = RuntimeHelpers.GetHashCode(key);
-        ref int bucket = ref _buckets[(hash >> 8) & (_buckets.Length - 1)];
+        ref int bucket = ref GetBucket(hash);
         ref int entryIndex = ref bucket;
 
         while (entryIndex != -1)
@@ -235,6 +235,12 @@ internal class WeakTable<TKey, TValue> where TKey : class
         _freeList = deadEntryIndex;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ref int GetBucket(int hash)
+    {
+        return ref _buckets[(hash >> 8) & (_buckets.Length - 1)];
+    }
+
     private void Expand()
     {
         int oldSize = _buckets.Length;
@@ -259,7 +265,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
         _entries = new Entry[newSize];
         _allocatedEntries = 0;
         _freeList = -1;
-        _lastGCCount = GC.CollectionCount(2);
+        _lastGCCount = GC.CollectionCount(0);
 
         for (int i = 0; i < oldAllocated; i++)
         {
@@ -279,7 +285,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
             ref Entry newEntry = ref _entries[newEntryIndex];
 
             int hash = oldEntry.hash;
-            ref int newBucket = ref _buckets[hash & (newSize - 1)];
+            ref int newBucket = ref GetBucket(hash);
 
             newEntry.key = oldEntry.key;
             newEntry.value = oldEntry.value;
