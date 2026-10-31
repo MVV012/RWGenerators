@@ -8,6 +8,9 @@ namespace RWGenerators;
 
 internal static class Utils
 {
+    public static readonly string Newline = @"
+";
+
     extension(ITypeSymbol typeSymbol)
     {
         public string FullyQualifiedName => typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -26,7 +29,7 @@ internal static class Utils
         }
     }
 
-    extension (IncrementalGeneratorPostInitializationContext ctx)
+    extension(IncrementalGeneratorPostInitializationContext ctx)
     {
         public void AddEmbeddedSource(string name)
         {
@@ -34,6 +37,32 @@ internal static class Utils
             string resourceName = $"{assembly.GetName().Name}.Embedded.{name}";
             using Stream stream = assembly.GetManifestResourceStream(resourceName);
             ctx.AddSource(name, SourceText.From(stream, Encoding.UTF8, canBeEmbedded: true));
+        }
+    }
+
+    extension<T>(AttributeData attributeData)
+    {
+        public T GetArg(string name, T defaultValue)
+        {
+            foreach ((string key, TypedConstant value) in attributeData.NamedArguments)
+            {
+                if (key == name)
+                {
+                    return (T)value.Value!;
+                }
+            }
+            return defaultValue;
+        }
+    }
+
+    extension(string str)
+    {
+        public string FirstCharToLower()
+        {
+            if (string.IsNullOrEmpty(str) || char.IsLower(str[0]))
+                return str;
+
+            return char.ToLower(str[0]) + str[1..];
         }
     }
 

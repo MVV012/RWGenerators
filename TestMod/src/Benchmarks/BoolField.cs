@@ -189,7 +189,7 @@ public class RandomBoolTest
     [Params(200)]
     public int ObjCount;
 
-    [Params(20_000_000)]
+    [Params(10_000_000)]
     public int ActionCount;
 
     [GlobalSetup]

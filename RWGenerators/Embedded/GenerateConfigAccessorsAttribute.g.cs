@@ -11,7 +11,30 @@ namespace RWGenerators;
 /// <param name="className">Generated class name. Namespace can be specified ("Namespace.ClassName"), otherwise current namespace will be used</param>
 [Microsoft.CodeAnalysis.Embedded]
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-internal class GenerateConfigAccessorsAttribute(string className) : Attribute
+internal class GenerateConfigAccessorsAttribute : Attribute
 {
-    public string ClassName { get; } = className;
+    public string ClassName { get; }
+    public string? ClassNamespace { get; }
+
+    /// <param name="namespaceAndName">
+    /// Generated class namespace and name separated by dot. If namespace is not specified current one will be used
+    /// <example><code>
+    /// "MyMod.Namespace.ClassName" - class will be created in namespace MyMod.Namespace
+    /// "ClassName" - class will be created in current namespace
+    /// </code></example>
+    /// </param>
+    public GenerateConfigAccessorsAttribute(string namespaceAndName)
+    {
+        int dotIndex = namespaceAndName.LastIndexOf('.');
+        if (dotIndex == -1)
+        {
+            ClassName = namespaceAndName;
+            ClassNamespace = null;
+        }
+        else
+        {
+            ClassName = namespaceAndName.Substring(dotIndex + 1);
+            ClassNamespace = namespaceAndName.Substring(0, dotIndex);
+        }
+    }
 }

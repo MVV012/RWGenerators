@@ -10,7 +10,7 @@ public class Generator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        context.RegisterPostInitializationOutput(AddAttribute);
+        context.RegisterPostInitializationOutput(AddEmbeddedSources);
 
         IncrementalValuesProvider<AttachedFieldInfo> fields = context.SyntaxProvider
             .ForAttributeWithMetadataName($"RWGenerators.AttachFieldAttribute`2",
@@ -19,33 +19,41 @@ public class Generator : IIncrementalGenerator
             .SelectMany((infos, _) => infos.ImmutableArray);
 
         context.RegisterSourceOutput(fields, AddAttachedField);
-        context.RegisterSourceOutput(fields.Collect(), AddAttachedFieldManager);
+
+        IncrementalValuesProvider<AttachedOptionalFieldInfo> optionalFields = context.SyntaxProvider
+            .ForAttributeWithMetadataName($"RWGenerators.AttachOptionalFieldAttribute`2",
+                (_, _) => true,
+                GetAttachedOptionalFieldInfo)
+            .SelectMany((infos, _) => infos.ImmutableArray);
+
+        context.RegisterSourceOutput(optionalFields, AddAttachedOptionalField);
+
+        context.RegisterSourceOutput(
+            fields.Collect()
+                .Combine(optionalFields.Collect())
+                .Select((p, _) => (EquatableArray<BaseAttachedFieldInfo>)[..p.Left, ..p.Right]),
+            AddAttachedFieldManager);
     }
 
-    private void AddAttribute(IncrementalGeneratorPostInitializationContext ctx)
+    private void AddEmbeddedSources(IncrementalGeneratorPostInitializationContext ctx)
     {
         ctx.AddEmbeddedAttributeDefinition();
         ctx.AddEmbeddedSource("AttachFieldAttribute.g.cs");
         ctx.AddEmbeddedSource("WeakTable.g.cs");
         ctx.AddEmbeddedSource("ReferenceEqualityComparer.g.cs");
+        ctx.AddEmbeddedSource("DictionaryExtensions.g.cs");
     }
 
     private EquatableArray<AttachedFieldInfo> GetAttachedFieldInfo(GeneratorAttributeSyntaxContext ctx, CancellationToken cancellationToken)
     {
-        if (ctx.TargetSymbol is not INamedTypeSymbol classSymbol
-            || ctx.TargetNode is not ClassDeclarationSyntax classSyntax)
-        {
+        if (ctx.TargetNode is not ClassDeclarationSyntax classSyntax)
             return [];
-        }
 
         var builder = ImmutableArray.CreateBuilder<AttachedFieldInfo>(ctx.Attributes.Length);
 
         foreach (AttributeData attributeData in ctx.Attributes)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return [];
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             ITypeSymbol attachToType = attributeData.AttributeClass!.TypeArguments[0];
             ITypeSymbol fieldType = attributeData.AttributeClass!.TypeArguments[1];
@@ -57,41 +65,18 @@ public class Generator : IIncrementalGenerator
                 _ => throw new ArgumentException("AttachFieldAttribute arguments are invalid")
             };
 
-            int impl = 0;
-            bool clearOnRWGameShutDown = true;
-            bool clearOnWorldLoaded = false;
-            foreach ((string key, TypedConstant value) in attributeData.NamedArguments)
-            {
-                switch (key)
-                {
-                    case "Impl":
-                        impl = (int)value.Value!;
-                        break;
-                    case "ClearOnRWGameShutDown":
-                        clearOnRWGameShutDown = (bool)value.Value!;
-                        break;
-                    case "ClearOnWorldLoaded":
-                        clearOnWorldLoaded = (bool)value.Value!;
-                        break;
-                }
-            }
-
             builder.Add(new AttachedFieldInfo(
                 attachToType.FullyQualifiedName,
                 fieldType.FullyQualifiedName,
                 fieldType.IsValueType,
                 propertyName,
-                new ClassInfo(
-                    classSyntax.Identifier.ToString(),
-                    classSyntax.GetDeclarationNamespace(),
-                    classSyntax.Modifiers.ToString()
-                )
+                ClassInfo.FromSyntax(classSyntax)
             )
             {
                 DefaultValueString = defaultValueString,
-                Impl = impl,
-                ClearOnRWGameShutDown = clearOnRWGameShutDown,
-                ClearOnWorldLoaded = clearOnWorldLoaded
+                Impl = attributeData.GetArg("Impl", 0),
+                ClearOnRWGameShutDown = attributeData.GetArg("ClearOnRWGameShutDown", true),
+                ClearOnWorldLoaded = attributeData.GetArg("ClearOnWorldLoaded", false),
             });
         }
 
@@ -105,10 +90,55 @@ public class Generator : IIncrementalGenerator
         ctx.AddSource(fileName, Source.Generate(info));
     }
 
-    private void AddAttachedFieldManager(SourceProductionContext ctx, ImmutableArray<AttachedFieldInfo> infos)
+    private EquatableArray<AttachedOptionalFieldInfo> GetAttachedOptionalFieldInfo(GeneratorAttributeSyntaxContext ctx, CancellationToken cancellationToken)
     {
-        ctx.AddSource("AttachedFieldManager.g.cs", $@"// <auto-generated />
-{string.Join("\r\n", infos
+        if (ctx.TargetNode is not ClassDeclarationSyntax classSyntax)
+            return [];
+
+        var builder = ImmutableArray.CreateBuilder<AttachedOptionalFieldInfo>(ctx.Attributes.Length);
+
+        foreach (AttributeData attributeData in ctx.Attributes)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            ITypeSymbol attachToType = attributeData.AttributeClass!.TypeArguments[0];
+            ITypeSymbol fieldType = attributeData.AttributeClass!.TypeArguments[1];
+
+            string propertyName = (string)attributeData.ConstructorArguments[0].Value!;
+
+            builder.Add(new AttachedOptionalFieldInfo(
+                attachToType.FullyQualifiedName,
+                fieldType.FullyQualifiedName,
+                fieldType.IsValueType,
+                propertyName,
+                ClassInfo.FromSyntax(classSyntax)
+            )
+            {
+                Impl = attributeData.GetArg("Impl", 0),
+                ClearOnRWGameShutDown = attributeData.GetArg("ClearOnRWGameShutDown", true),
+                ClearOnWorldLoaded = attributeData.GetArg("ClearOnWorldLoaded", false),
+                AddGetOrCreateValue = attributeData.GetArg("AddGetOrCreateValue", false),
+                AddGetOrAddValue = attributeData.GetArg("AddGetOrAddValue", false),
+            });
+        }
+
+        return new(builder.MoveToImmutable());
+    }
+
+    private void AddAttachedOptionalField(SourceProductionContext ctx, AttachedOptionalFieldInfo info)
+    {
+        string fileName = $"{info.AttachToType.Replace("global::", "")}_{info.PropertyName}.g.cs";
+
+        ctx.AddSource(fileName, Source.GenerateOptional(info));
+    }
+
+    private void AddAttachedFieldManager(SourceProductionContext ctx, EquatableArray<BaseAttachedFieldInfo> infos)
+    {
+        if (infos.Length == 0)
+            return;
+
+        ctx.AddSource("AttachedFieldManager.g.cs", $@"// <auto-generated/>
+{string.Join(Utils.Newline, infos
     .Select(i => i.ContainingClass.Namespace)
     .Distinct()
     .Select(n => $"using {n};"))}
@@ -131,21 +161,21 @@ internal static class AttachedFieldManager
 
     public static void ClearOnRWGameShutDown()
     {{
-        {string.Join("\r\n        ", infos
+        {string.Join($"{Utils.Newline}        ", infos
             .Where(i => i.ClearOnRWGameShutDown)
             .Select(ClearMethodCall))}
     }}
 
     public static void ClearOnWorldLoaded()
     {{
-        {string.Join("\r\n        ", infos
+        {string.Join($"{Utils.Newline}        ", infos
             .Where(i => i.ClearOnWorldLoaded)
             .Select(ClearMethodCall))}
     }}
 
     public static void ClearAllFields()
     {{
-        {string.Join("\r\n        ", infos.Select(ClearMethodCall))}
+        {string.Join($"{Utils.Newline}        ", infos.Select(ClearMethodCall))}
     }}
 
     private static void RainWorldGame_ShutDownProcess(On.RainWorldGame.orig_ShutDownProcess orig, RainWorldGame self)
@@ -161,6 +191,6 @@ internal static class AttachedFieldManager
     }}
 }}");
 
-        static string ClearMethodCall(AttachedFieldInfo info) => $"{info.AttachToType}.ClearAll{info.PropertyName}Fields();";
+        static string ClearMethodCall(BaseAttachedFieldInfo info) => $"{info.AttachToType}.ClearAll{info.PropertyName}Fields();";
     }
 }

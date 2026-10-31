@@ -7,6 +7,9 @@ namespace TestMod;
 [AttachField<TestClass, bool>("Dict", ClearOnWorldLoaded = true, Impl = AttachFieldImpl.StrongRef)]
 [AttachField<TestClass, ClassWithBool>("DictRef", Impl = AttachFieldImpl.StrongRef)]
 [AttachField<TestClass, bool>("DictDefTrue", true, Impl = AttachFieldImpl.StrongRef)]
+[AttachOptionalField<TestClass, bool>("Optional", AddGetOrCreateValue = true, AddGetOrAddValue = true, ClearOnWorldLoaded = true)]
+[AttachOptionalField<TestClass, ClassWithBool>("OptionalRef", AddGetOrAddValue = true, ClearOnWorldLoaded = true)]
+[AttachOptionalField<TestClass, bool>("OptionalDict", AddGetOrCreateValue = true, AddGetOrAddValue = true, Impl = AttachFieldImpl.StrongRef)]
 internal static partial class AttachedFields
 {
     public static void Test()
@@ -17,6 +20,18 @@ internal static partial class AttachedFields
         a.Dict = true;
         a.DictRef.BoolProperty = true;
         a.DictDefTrue = false;
+
+        a.SetOptional(true);
+
+        if (a.TryGetOptional(out bool value))
+        {
+            Log.Log($"Optional = {value}");
+            a.RemoveOptional();
+        }
+
+        a.RemoveOptional();
+        a.GetOrAddOptionalRef(() => new());
+        a.GetOrCreateOptionalDict();
 
         Log.Log($"{a.WeakRef} {a.WeakValue} {a.Dict} {a.DictRef} {a.DictDefTrue}");
     }

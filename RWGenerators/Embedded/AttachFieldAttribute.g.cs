@@ -8,10 +8,27 @@ namespace RWGenerators;
 [Microsoft.CodeAnalysis.Embedded]
 internal enum AttachFieldImpl
 {
+    /// <summary>
+    /// Keys are stored as weak references using custom WeakTable <br/>
+    /// Values are srored as strong references, but are periodically cleared <br/>
+    /// Note that if value contains reference to its key both of them won't get cleared
+    /// </summary>
     WeakRef = 0,
+
+    /// <summary>
+    /// Keys and values will be stored as strong references using Dictionary or HashSet<br/>
+    /// This provides better perfomance, but references will be cleared only when all fields are cleared (by default - on RainWorldGame.ShutDownProcess)
+    /// </summary>
     StrongRef = 1,
 }
 
+/// <summary>
+/// Put this attribute on static partial class to attach new field to existing object <br/>
+/// Extension property with specified name will be generated to access that field <br/>
+/// Don't forget to call <c>AttachedFieldManager.ApplyHooks()</c> for automatic field clearing
+/// </summary>
+/// <typeparam name="TKey">Fields will be attached to objects of that type</typeparam>
+/// <typeparam name="TValue">Type of attached field</typeparam>
 [Microsoft.CodeAnalysis.Embedded]
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
 internal class AttachFieldAttribute<TKey, TValue> : Attribute where TKey : class
@@ -33,5 +50,32 @@ internal class AttachFieldAttribute<TKey, TValue> : Attribute where TKey : class
     {
         PropertyName = propertyName;
         DefaultValue = defaultValue;
+    }
+}
+
+/// <summary>
+/// Put this attribute on static partial class to attach new optional field to existing object <br/>
+/// Extension methods <c>TryGet{Name}, Set{Name}, Remove{Name}</c> will be generated to access that field <br/>
+/// Don't forget to call <c>AttachedFieldManager.ApplyHooks()</c> for automatic field clearing
+/// </summary>
+/// <typeparam name="TKey">Fields will be attached to objects of that type</typeparam>
+/// <typeparam name="TValue">Type of attached field</typeparam>
+[Microsoft.CodeAnalysis.Embedded]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+internal class AttachOptionalFieldAttribute<TKey, TValue> : Attribute where TKey : class
+{
+    public string PropertyName { get; }
+
+    public bool ClearOnRWGameShutDown { get; init; } = true;
+    public bool ClearOnWorldLoaded { get; init; } = false;
+
+    public bool AddGetOrCreateValue { get; init; } = false;
+    public bool AddGetOrAddValue { get; init; } = false;
+
+    public AttachFieldImpl Impl { get; init; } = AttachFieldImpl.WeakRef;
+
+    public AttachOptionalFieldAttribute(string propertyName)
+    {
+        PropertyName = propertyName;
     }
 }

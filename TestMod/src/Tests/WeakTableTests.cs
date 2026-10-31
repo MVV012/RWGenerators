@@ -45,7 +45,7 @@ public class WeakTableTests : TestCaseGroup, ITestable
     // Most tests are based on https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System.Runtime.Tests/System/Runtime/CompilerServices/ConditionalWeakTableTests.cs
     public void AddCullDead(int numObjects)
     {
-        using TestCaseGroup addCullDeadGroup = new(this, $"AddCullDead({numObjects}) - Adding");
+        using TestCaseGroup addCullDeadGroup = new(this, $"AddCullDead({numObjects})");
 
         Func<int, (WeakTable<object, object>, WeakReference[], WeakReference[])> body = count =>
         {
@@ -190,7 +190,7 @@ public class WeakTableTests : TestCaseGroup, ITestable
 
     public void ClearAllValuesRemoved(int numObjects, int iters)
     {
-        using TestCaseGroup group = new(this, $"Clear_AllValuesRemoved({numObjects}, {iters})");
+        using TestCaseGroup group = new(this, $"ClearAllValuesRemoved({numObjects}, {iters})");
 
         var wt = new WeakTable<object, object>();
 
