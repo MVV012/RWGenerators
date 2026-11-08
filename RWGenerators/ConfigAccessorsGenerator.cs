@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections.Immutable;
 using System.Text;
 
 namespace RWGenerators;
@@ -46,25 +47,20 @@ public class ConfigAccessorsGenerator : IIncrementalGenerator
             return null;
 
         (string generatedName, string? generatedNamespace) = Utils.SplitNameAndNamespace(attributeArgument);
-        generatedNamespace ??= Utils.GetDeclarationNamespace(classSyntax);
+        generatedNamespace ??= classSyntax.GetDeclarationNamespace();
 
-        List<(string Name, string Type)> configurables = [];
-        foreach (IPropertySymbol symbol in classSymbol.GetMembers()
-            .OfType<IPropertySymbol>()
-            .Where(s => s.IsStatic && s.Type.Name == "Configurable"))
+        ImmutableArray<ISymbol> members = classSymbol.GetMembers();
+        var builder = ImmutableArray.CreateBuilder<(string Name, string Type)>(Math.Max(members.Length / 2, 8));
+
+        foreach (ISymbol symbol in members)
         {
-            if (symbol.Type is INamedTypeSymbol genericType)
+            if (symbol is IPropertySymbol { IsStatic: true, Type: INamedTypeSymbol { Name: "Configurable" } propertyType })
             {
-                configurables.Add((symbol.Name, genericType.TypeArguments[0].FullyQualifiedName));
+                builder.Add((symbol.Name, propertyType.TypeArguments[0].FullyQualifiedName));
             }
-        }
-        foreach (IFieldSymbol symbol in classSymbol.GetMembers()
-            .OfType<IFieldSymbol>()
-            .Where(s => s.IsStatic && s.AssociatedSymbol == null && s.Type.Name == "Configurable"))
-        {
-            if (symbol.Type is INamedTypeSymbol genericType)
+            else if (symbol is IFieldSymbol { IsStatic: true, AssociatedSymbol: null, Type: INamedTypeSymbol { Name: "Configurable" } fieldType })
             {
-                configurables.Add((symbol.Name, genericType.TypeArguments[0].FullyQualifiedName));
+                builder.Add((symbol.Name, fieldType.TypeArguments[0].FullyQualifiedName));
             }
         }
 
@@ -72,7 +68,7 @@ public class ConfigAccessorsGenerator : IIncrementalGenerator
             generatedName,
             generatedNamespace,
             classSymbol.FullyQualifiedName,
-            [..configurables]
+            new(builder.ToImmutable())
         );
     }
 

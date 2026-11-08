@@ -219,6 +219,15 @@ public class LambdaInliningTest // They don't get inlined
     public int LambdaInlined() => AcceptInline(() => 5);
 
     [Benchmark]
+    public int AggressiveLambdaInlined() => AcceptInline([MethodImpl(MethodImplOptions.AggressiveInlining)] () => 5);
+
+    [Benchmark]
+    public int MethodInlined() => AcceptInline(Method);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int Method() => 5;
+
+    [Benchmark]
     public int LambdaNotInlined() => AcceptNoInline(() => 5);
 
 
