@@ -25,7 +25,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
     private int _checkGCCount = 0;
 
     private const int InitialCapacity = 8;
-    private const int CheckGCCountInterval = 10;
+    private const int CheckGCCountInterval = 5;
     private const int CullDeadAfterGCCollections = 10;
 
     public WeakTable()
@@ -57,8 +57,6 @@ internal class WeakTable<TKey, TValue> where TKey : class
 
     public bool TryGetValue(TKey key, out TValue value)
     {
-        CullDeadIfNeeded();
-
         int hash = RuntimeHelpers.GetHashCode(key);
         ref int entryIndex = ref GetBucket(hash);
 
@@ -76,6 +74,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
                 else if (object.ReferenceEquals(keyTarget, key))
                 {
                     value = entry.value;
+                    CullDeadIfNeeded();
                     return true;
                 }
             }
@@ -87,8 +86,6 @@ internal class WeakTable<TKey, TValue> where TKey : class
 
     public void Remove(TKey key)
     {
-        CullDeadIfNeeded();
-
         int hash = RuntimeHelpers.GetHashCode(key);
         ref int entryIndex = ref GetBucket(hash);
 
@@ -106,6 +103,7 @@ internal class WeakTable<TKey, TValue> where TKey : class
                 else if (object.ReferenceEquals(keyTarget, key))
                 {
                     RemoveEntry(ref entryIndex, ref entry);
+                    CullDeadIfNeeded();
                     return;
                 }
             }
