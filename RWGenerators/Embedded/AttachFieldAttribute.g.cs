@@ -37,7 +37,7 @@ internal class AttachFieldAttribute<TKey, TValue> : Attribute where TKey : class
     public TValue? DefaultValue { get; }
 
     public bool ClearOnRWGameShutDown { get; init; } = true;
-    public bool ClearOnWorldLoaded { get; init; } = false;
+    public bool ClearOnWorldLoaded { get; init; } = true;
 
     public AttachFieldImpl Impl { get; init; } = AttachFieldImpl.WeakRef;
 
@@ -67,7 +67,7 @@ internal class AttachOptionalFieldAttribute<TKey, TValue> : Attribute where TKey
     public string PropertyName { get; }
 
     public bool ClearOnRWGameShutDown { get; init; } = true;
-    public bool ClearOnWorldLoaded { get; init; } = false;
+    public bool ClearOnWorldLoaded { get; init; } = true;
 
     public bool AddGetOrCreateValue { get; init; } = false;
     public bool AddGetOrAddValue { get; init; } = false;

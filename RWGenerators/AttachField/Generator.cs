@@ -76,7 +76,7 @@ public class Generator : IIncrementalGenerator
                 DefaultValueString = defaultValueString,
                 Impl = attributeData.GetArg("Impl", 0),
                 ClearOnRWGameShutDown = attributeData.GetArg("ClearOnRWGameShutDown", true),
-                ClearOnWorldLoaded = attributeData.GetArg("ClearOnWorldLoaded", false),
+                ClearOnWorldLoaded = attributeData.GetArg("ClearOnWorldLoaded", true),
             });
         }
 
@@ -116,7 +116,7 @@ public class Generator : IIncrementalGenerator
             {
                 Impl = attributeData.GetArg("Impl", 0),
                 ClearOnRWGameShutDown = attributeData.GetArg("ClearOnRWGameShutDown", true),
-                ClearOnWorldLoaded = attributeData.GetArg("ClearOnWorldLoaded", false),
+                ClearOnWorldLoaded = attributeData.GetArg("ClearOnWorldLoaded", true),
                 AddGetOrCreateValue = attributeData.GetArg("AddGetOrCreateValue", false),
                 AddGetOrAddValue = attributeData.GetArg("AddGetOrAddValue", false),
             });
