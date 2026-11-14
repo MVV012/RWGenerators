@@ -39,6 +39,8 @@ internal class AttachFieldAttribute<TKey, TValue> : Attribute where TKey : class
     public bool ClearOnRWGameShutDown { get; init; } = true;
     public bool ClearOnWorldLoaded { get; init; } = true;
 
+    public bool AddRemoveValue { get; init; } = false;
+
     public AttachFieldImpl Impl { get; init; } = AttachFieldImpl.WeakRef;
 
     public AttachFieldAttribute(string propertyName)

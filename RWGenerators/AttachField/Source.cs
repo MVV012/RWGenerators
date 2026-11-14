@@ -46,6 +46,7 @@ namespace {info.ContainingClass.Namespace};
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => {containerName}.SetValue(attachedTo, value);
         }}
+        {(info.AddRemoveValue ? @$"public void Remove{info.PropertyName}() => {containerName}.Remove(attachedTo);" : "")}
         public static void ClearAll{info.PropertyName}Fields() => {containerName}.Clear();
     }}
 }}";
@@ -95,6 +96,7 @@ namespace {info.ContainingClass.Namespace};
                     {containerName}.SetValue(attachedTo, value);
             }}
         }}
+        {(info.AddRemoveValue ? @$"public void Remove{info.PropertyName}() => {containerName}.Remove(attachedTo);" : "")}
         public static void ClearAll{info.PropertyName}Fields() => {containerName}.Clear();
     }}
 }}";
@@ -132,6 +134,7 @@ namespace {info.ContainingClass.Namespace};
                     {containerName}.Remove(attachedTo);
             }}
         }}
+        {(info.AddRemoveValue ? @$"public void Remove{info.PropertyName}() => {containerName}.Remove(attachedTo);" : "")}
         public static void ClearAll{info.PropertyName}Fields() => {containerName}.Clear();
     }}
 }}";

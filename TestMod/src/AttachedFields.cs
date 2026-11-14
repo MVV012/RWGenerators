@@ -2,7 +2,7 @@ using RWGenerators;
 
 namespace TestMod;
 
-[AttachField<TestClass, ClassWithBool>("WeakRef")]
+[AttachField<TestClass, ClassWithBool>("WeakRef", AddRemoveValue = true)]
 [AttachField<TestClass, bool>("WeakValue", false)]
 [AttachField<TestClass, bool>("Dict", ClearOnWorldLoaded = true, Impl = AttachFieldImpl.StrongRef)]
 [AttachField<TestClass, ClassWithBool>("DictRef", Impl = AttachFieldImpl.StrongRef)]

@@ -13,6 +13,7 @@ internal abstract record class BaseAttachedFieldInfo(
     public int Impl { get; init; } = 0;
     public bool ClearOnRWGameShutDown { get; init; } = true;
     public bool ClearOnWorldLoaded { get; init; } = false;
+    public bool AddRemoveValue { get; init; } = false;
 }
 
 internal sealed record class AttachedFieldInfo(

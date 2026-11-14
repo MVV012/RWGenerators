@@ -77,6 +77,7 @@ public class Generator : IIncrementalGenerator
                 Impl = attributeData.GetArg("Impl", 0),
                 ClearOnRWGameShutDown = attributeData.GetArg("ClearOnRWGameShutDown", true),
                 ClearOnWorldLoaded = attributeData.GetArg("ClearOnWorldLoaded", true),
+                AddRemoveValue = attributeData.GetArg("AddRemoveValue", false)
             });
         }
 
